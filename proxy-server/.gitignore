@@ -1,0 +1,11 @@
+/target/
+**/*.rs.bk
+*.pdb
+
+# Environment files (contain secrets)
+.env
+.env.local
+
+# Test environment files (safe to commit)
+!.env.test
+!.env.example

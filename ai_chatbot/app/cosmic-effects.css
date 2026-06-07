@@ -1,0 +1,220 @@
+/* ==========================================================================
+   COSMIC EFFECTS - Stars and meteors
+   ========================================================================== */
+
+/* ── Stars: colors/sizes/glows from JS; static crisp “specular” look (no twinkle) ─ */
+.starshine-star {
+  border-radius: 50%;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* Subtle static polish — not animated */
+  filter: saturate(1.085) contrast(1.03) brightness(1.012);
+}
+
+/* ── Meteor Travel Animation ─────────────────────────────────────────── */
+/* Crosses viewport: fade in early, stay visible until near exit, then fade */
+/* Visible along the whole path: enter off-screen top/left → exit past bottom/right */
+@keyframes meteor-travel-enhanced {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--meteor-angle, 30deg));
+    opacity: 0.42;
+  }
+  4% {
+    opacity: 0.52;
+  }
+  96% {
+    opacity: 0.34;
+  }
+  99% {
+    opacity: 0.18;
+  }
+  100% {
+    transform: translate3d(
+        var(--meteor-travel-x, 135vw),
+        var(--meteor-travel-y, 118vh),
+        0
+      )
+      rotate(var(--meteor-angle, 30deg));
+    opacity: 0;
+  }
+}
+
+/* Wrapper */
+.meteor-enhanced-wrapper {
+  position: absolute;
+  width: var(--meteor-length, 52px);
+  height: 1px;
+  animation-name: meteor-travel-enhanced;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.meteor-enhanced {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(190, 210, 252, 0.09) 26%,
+    rgba(220, 232, 255, 0.2) 56%,
+    rgba(248, 250, 255, 0.48) 86%,
+    rgba(255, 255, 255, 0.72) 100%
+  );
+  filter: blur(0.22px);
+}
+
+.meteor-enhanced::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5px;
+  height: 1.5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 0 1.5px 0.35px rgba(255, 255, 255, 0.55),
+    0 0 4px 1px rgba(200, 220, 255, 0.22);
+}
+
+.meteor-enhanced.meteor-bright {
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(190, 210, 252, 0.12) 24%,
+    rgba(220, 234, 255, 0.26) 52%,
+    rgba(250, 252, 255, 0.58) 84%,
+    rgba(255, 255, 255, 0.88) 100%
+  );
+}
+
+.meteor-enhanced.meteor-bright::after {
+  width: 2px;
+  height: 2px;
+  box-shadow:
+    0 0 2px 0.4px rgba(255, 255, 255, 0.6),
+    0 0 5px 1.1px rgba(200, 220, 255, 0.28);
+}
+
+/* ── Portal hamburger: periodic shine sweep (idle = subtle, hover = stronger) ─ */
+@keyframes portal-hamburger-shine-idle {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  5% {
+    opacity: 0;
+  }
+  48% {
+    opacity: 0.12;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    left: 82%;
+  }
+}
+
+@keyframes portal-hamburger-shine-hover {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  5% {
+    opacity: 0;
+  }
+  48% {
+    opacity: 0.34;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    left: 82%;
+  }
+}
+
+.portal-hamburger-shine {
+  overflow: hidden;
+  transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+}
+
+.portal-hamburger-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 15%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transform: skewX(-10deg);
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 255 255 / 2%) 1%,
+    rgb(255 255 255 / 28%) 30%,
+    rgb(255 255 255 / 38%) 50%,
+    rgb(255 255 255 / 38%) 70%,
+    rgb(255 255 255 / 38%) 71%,
+    rgb(255 255 255 / 0%) 100%
+  );
+  animation: portal-hamburger-shine-idle 2.4s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.portal-hamburger-shine:hover::after {
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 255 255 / 4%) 1%,
+    rgb(255 255 255 / 52%) 30%,
+    rgb(255 255 255 / 62%) 50%,
+    rgb(255 255 255 / 62%) 70%,
+    rgb(255 255 255 / 62%) 71%,
+    rgb(255 255 255 / 0%) 100%
+  );
+  animation-delay: 0s;
+  animation-duration: 0.85s;
+  animation-name: portal-hamburger-shine-hover;
+  animation-timing-function: ease-out;
+}
+
+.dark .portal-hamburger-shine::after {
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 255 255 / 2%) 1%,
+    rgb(255 255 255 / 14%) 30%,
+    rgb(255 255 255 / 20%) 50%,
+    rgb(255 255 255 / 20%) 70%,
+    rgb(255 255 255 / 20%) 71%,
+    rgb(255 255 255 / 0%) 100%
+  );
+}
+
+.dark .portal-hamburger-shine:hover::after {
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 255 255 / 3%) 1%,
+    rgb(255 255 255 / 26%) 30%,
+    rgb(255 255 255 / 38%) 50%,
+    rgb(255 255 255 / 38%) 70%,
+    rgb(255 255 255 / 38%) 71%,
+    rgb(255 255 255 / 0%) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-hamburger-shine::after {
+    animation: none;
+  }
+}

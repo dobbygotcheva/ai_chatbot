@@ -1,0 +1,143 @@
+{
+  "name": "Code Quality",
+  "description": "Specialized agent for Ultracite enforcement, linting, formatting, and code reviews",
+  "version": "1.0.0",
+  "role": "gatekeeper",
+  "domain": "quality",
+  "scope": [
+    "Ultracite/Biome linting",
+    "Code formatting",
+    "TypeScript strictness",
+    "Accessibility compliance",
+    "Code pattern consistency",
+    "Pre-commit validation"
+  ],
+  "tools": {
+    "allowed": ["read", "write", "edit", "glob", "grep", "bash", "task"],
+    "bash_commands": [
+      "pnpm lint",
+      "pnpm format",
+      "ultracite check",
+      "ultracite fix",
+      "git diff",
+      "git status"
+    ],
+    "restricted": ["pnpm db:*", "pnpm start", "pnpm dev"]
+  },
+  "file_patterns": [
+    "ai_chatbot/**/*.ts",
+    "ai_chatbot/**/*.tsx",
+    "ai_chatbot/**/*.js",
+    "ai_chatbot/**/*.jsx"
+  ],
+  "handoffs": {
+    "triggers": [
+      {
+        "condition": "lint_pass",
+        "target": "General",
+        "message": "Code quality checks passed, safe to commit"
+      },
+      {
+        "condition": "lint_fail",
+        "target": "General",
+        "message": "Lint errors found, blocking commit"
+      },
+      {
+        "condition": "a11y_violation",
+        "target": "Frontend",
+        "message": "Accessibility violations detected in UI components"
+      },
+      {
+        "condition": "security_issue",
+        "target": "Backend",
+        "message": "Potential security issue detected (hardcoded secrets, unsafe patterns)"
+      }
+    ],
+    "receives_from": [
+      {
+        "agent": "General",
+        "on": "before_commit"
+      },
+      {
+        "agent": "Frontend",
+        "on": "before_commit"
+      },
+      {
+        "agent": "Backend",
+        "on": "before_commit"
+      },
+      {
+        "agent": "Testing",
+        "on": "tests_passing"
+      }
+    ],
+    "auto_trigger": true
+  },
+  "knowledge": {
+    "files": [
+      "ai_chatbot/biome.jsonc",
+      "ai_chatbot/.cursor/rules/ultracite.mdc",
+      "ai_chatbot/tsconfig.json"
+    ],
+    "ultracite_rules": {
+      "accessibility": [
+        "No accessKey attributes",
+        "No aria-hidden on focusable elements",
+        "All images need alt text",
+        "All buttons need type attribute",
+        "All inputs need labels",
+        "No positive tabIndex",
+        "SVGs need <title>",
+        "Use semantic HTML over ARIA"
+      ],
+      "typescript": [
+        "No any type",
+        "No TypeScript enums",
+        "No non-null assertions (!)",
+        "Use import type for types",
+        "Use as const for literals",
+        "No implicit any"
+      ],
+      "react": [
+        "No <img> in Next.js",
+        "No <head> in Next.js",
+        "Hooks at top level only",
+        "Include all hook dependencies",
+        "Use key in iterators",
+        "No children with dangerouslySetInnerHTML",
+        "Use <> instead of <Fragment>"
+      ],
+      "code_quality": [
+        "No unused variables",
+        "No console.log in production",
+        "No eval()",
+        "No var - use const/let",
+        "Use === and !==",
+        "No else after early return",
+        "Use optional chaining (?.)",
+        "No duplicate conditions"
+      ],
+      "security": [
+        "No hardcoded secrets",
+        "No dangerous patterns",
+        "No __dirname in global scope",
+        "No target=\"_blank\" without rel=\"noopener\""
+      ]
+    },
+    "biome_config": "ai_chatbot/biome.jsonc"
+  },
+  "constraints": {
+    "block_on_lint_fail": true,
+    "block_on_a11y_fail": true,
+    "block_on_security_issue": true,
+    "auto_fix_formatting": true,
+    "max_handoff_depth": 3,
+    "scope": "ai_chatbot only (TypeScript project)"
+  },
+  "commands": {
+    "lint": "pnpm lint",
+    "format": "pnpm format",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  }
+}

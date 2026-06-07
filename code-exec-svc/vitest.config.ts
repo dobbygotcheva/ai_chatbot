@@ -1,0 +1,11 @@
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: "node",
+    testTimeout: 120000, // 2 minutes for Docker operations
+    hookTimeout: 30000,
+    exclude: ["**/benchmarks/**", "**/node_modules/**"],
+  },
+});

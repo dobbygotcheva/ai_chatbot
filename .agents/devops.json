@@ -1,0 +1,101 @@
+{
+  "name": "DevOps",
+  "description": "Situational agent for GitLab CI, builds, deployments, and infrastructure",
+  "version": "1.0.0",
+  "role": "specialist",
+  "domain": "devops",
+  "activation": "situational",
+  "scope": [
+    "GitLab CI/CD pipelines",
+    "Build configuration",
+    "Deployment automation",
+    "Environment management",
+    "Docker configuration",
+    "Monitoring setup",
+    "Database migration deployment"
+  ],
+  "tools": {
+    "allowed": ["read", "write", "edit", "glob", "grep", "bash", "task"],
+    "bash_commands": [
+      "pnpm build",
+      "pnpm db:migrate",
+      "git status",
+      "git log",
+      "docker --version",
+      "node --version"
+    ],
+    "restricted": ["pnpm dev", "pnpm start"]
+  },
+  "file_patterns": [
+    ".gitlab-ci.yml",
+    "ai_chatbot/Dockerfile*",
+    "docker-compose*.yml",
+    ".env*",
+    "ai_chatbot/lib/db/migrate.ts"
+  ],
+  "handoffs": {
+    "triggers": [
+      {
+        "condition": "deploy_complete",
+        "target": "Testing",
+        "message": "Deployment complete, please run E2E tests on staging"
+      },
+      {
+        "condition": "migration_deployed",
+        "target": "Backend",
+        "message": "Database migration deployed, verify schema changes"
+      },
+      {
+        "condition": "build_failed",
+        "target": "General",
+        "message": "Build pipeline failed, review required"
+      }
+    ],
+    "receives_from": [
+      {
+        "agent": "Backend",
+        "on": "migration_created"
+      },
+      {
+        "agent": "General",
+        "on": "release_requested"
+      }
+    ],
+    "auto_trigger": false
+  },
+  "knowledge": {
+    "files": [
+      ".gitlab-ci.yml",
+      "ai_chatbot/package.json",
+      "ai_chatbot/lib/db/migrate.ts",
+      "ai_chatbot/Dockerfile"
+    ],
+    "gitlab_ci": {
+      "stages": ["lint", "test", "build", "migrate", "deploy"],
+      "environments": {
+        "staging": "development branch",
+        "production": "main branch"
+      }
+    },
+    "deployment_rules": [
+      "Run migrations before build",
+      "Test on staging before production",
+      "Rollback plan required for breaking changes",
+      "Environment variables from GitLab CI/CD settings",
+      "Never commit secrets to .env files"
+    ]
+  },
+  "constraints": {
+    "require_migration_backup": true,
+    "require_staging_test": true,
+    "no_production_direct": true,
+    "max_file_changes": 5
+  },
+  "commands": {
+    "build": "pnpm build",
+    "migrate": "pnpm db:migrate",
+    "ci_lint": "gitlab-ci-lint",
+    "deploy_staging": "git push origin development",
+    "deploy_production": "git push origin main"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "ai_center",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Center monorepo",
+  "scripts": {
+    "bump:code-exec": "./scripts/bump-code-exec-version.sh",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0"
+  }
+}

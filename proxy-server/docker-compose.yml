@@ -1,0 +1,47 @@
+# Proxy Server Service
+# Usage: docker compose up -d
+
+services:
+  llm-proxy:
+    image: ${CI_REGISTRY_IMAGE:-rd-gitlab.egt-bg.com:4567/sm/ai_center}/proxy:${CI_COMMIT_SHORT_SHA:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: always
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_proxy
+    ports:
+      - "${PROXY_PORT:-3001}:3002"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - UPSTREAM_BASE_URL=${UPSTREAM_BASE_URL}
+      - PORT=3002
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '${PROXY_CPU_LIMIT:-1.0}'
+          memory: ${PROXY_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: '${PROXY_CPU_RESERVATION:-0.25}'
+          memory: ${PROXY_MEMORY_RESERVATION:-128M}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "false"
+
+networks:
+  app_network:
+    name: ${NETWORK_NAME:-ai_center}
+    driver: bridge

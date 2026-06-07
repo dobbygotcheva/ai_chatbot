@@ -1,0 +1,107 @@
+{
+  "name": "Backend",
+  "description": "Specialized agent for API routes, Drizzle ORM, migrations, auth, and Redis",
+  "version": "1.0.0",
+  "role": "specialist",
+  "domain": "backend",
+  "scope": [
+    "API routes and handlers",
+    "Drizzle ORM and database schema",
+    "Database migrations",
+    "Authentication and authorization",
+    "Redis caching",
+    "Server-side logic",
+    "Environment configuration"
+  ],
+  "tools": {
+    "allowed": ["read", "write", "edit", "glob", "grep", "bash", "task"],
+    "bash_commands": [
+      "pnpm db:generate",
+      "pnpm db:migrate",
+      "pnpm db:studio",
+      "pnpm db:push",
+      "pnpm db:pull",
+      "pnpm db:check",
+      "pnpm dev",
+      "pnpm build"
+    ],
+    "restricted": ["pnpm start"]
+  },
+  "file_patterns": [
+    "ai_chatbot/app/api/**/*.ts",
+    "ai_chatbot/lib/db/**/*.ts",
+    "ai_chatbot/lib/ai/**/*.ts",
+    "ai_chatbot/lib/auth/**/*.ts",
+    "ai_chatbot/lib/redis/**/*.ts",
+    "ai_chatbot/lib/utils/**/*.ts"
+  ],
+  "handoffs": {
+    "triggers": [
+      {
+        "condition": "api_route_changed",
+        "target": "Testing",
+        "message": "API endpoint modified, please update API tests"
+      },
+      {
+        "condition": "api_contract_changed",
+        "target": "Frontend",
+        "message": "API contract changed, please review frontend integration"
+      },
+      {
+        "condition": "migration_created",
+        "target": "DevOps",
+        "message": "New database migration created, please plan deployment"
+      },
+      {
+        "condition": "before_commit",
+        "target": "Code Quality",
+        "message": "Backend changes ready for lint and security review"
+      }
+    ],
+    "receives_from": [
+      {
+        "agent": "General",
+        "on": "api_route_changed"
+      },
+      {
+        "agent": "Frontend",
+        "on": "api_integration_needed"
+      }
+    ]
+  },
+  "knowledge": {
+    "files": [
+      "ai_chatbot/lib/db/schema.ts",
+      "ai_chatbot/lib/db/migrate.ts",
+      "ai_chatbot/app/api/**/*",
+      "ai_chatbot/.env.example"
+    ],
+    "rules": [
+      "Always use parameterized queries",
+      "Never expose database errors to client",
+      "Validate all input with Zod",
+      "Use transactions for multi-step operations",
+      "Index foreign keys",
+      "Never commit .env files",
+      "Use bcrypt for password hashing",
+      "Implement rate limiting on auth endpoints"
+    ],
+    "libraries": [
+      "Drizzle ORM",
+      "PostgreSQL (postgres)",
+      "Redis (redis)",
+      "Zod validation",
+      "NextAuth.js",
+      "AI SDK"
+    ]
+  },
+  "constraints": {
+    "max_file_changes": 15,
+    "require_migration_review": true,
+    "require_lint_pass": true,
+    "no_hardcoded_secrets": true,
+    "no_raw_sql": true,
+    "prefer_ai_chatbot": true,
+    "avoid_dependency_modifications": true
+  }
+}

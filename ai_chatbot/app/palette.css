@@ -1,0 +1,211 @@
+/* ==========================================================================
+   PALETTE — all color CSS variables (brand, theme, chrome, stars).
+   Loaded from design-tokens.css → globals.css
+   ========================================================================== */
+
+:root {
+  /* ── Brand (EGT Red = #E42314) — only hsl for the red shade ── */
+  --color-brand: hsl(4 84% 49%);
+  --brand-rgb: 228 35 20;
+  /* Login button — gradient end stops (same red tone) */
+  --login-brand-gradient-end: #c01e10;
+  --login-brand-gradient-hover-start: #f0291a;
+  --login-brand-gradient-hover-end: #d02215;
+
+  /* Static stars (cosmic-effects) */
+  --star-glow-core: 255 255 255;
+  --star-glow-halo: 220 235 255;
+
+  /*
+   * Unified white for glass UI (light theme):
+   * suggestion chips, disclaimer, composer overlay, .input-pane / .suggestion-pane, sidebar.
+   */
+  --chrome-glass-surface-light: hsl(0 0% 100%);
+
+  /* Sidebar accent overrides (inline Tailwind → var) */
+  --sidebar-accent-app-light: hsl(0 0% 0% / 0.07);
+  --sidebar-accent-app-dark: hsl(0 0% 100% / 0.07);
+  --sidebar-accent-portal-light: hsl(0 0% 0% / 0.12);
+  --sidebar-accent-portal-dark: hsl(0 0% 100% / 0.08);
+
+  /* Chrome — light theme: same background as --chrome-glass-surface-light */
+  --chrome-egt-sidebar-gradient: linear-gradient(
+    180deg,
+    var(--chrome-glass-surface-light),
+    var(--chrome-glass-surface-light)
+  );
+  --chrome-egt-sidebar-gradient-dark: linear-gradient(
+    180deg,
+    hsl(220 6% 16% / 0.92),
+    hsl(220 5% 12% / 0.96)
+  );
+  /* Neutral like the sidebar — without warm tint */
+  --chrome-input-pane-light-border: hsl(0 0% 88%);
+  /* Sidebar: same white + shadow (horizontal analog of chip) */
+  --chrome-egt-sidebar-border: var(--chrome-glass-surface-light);
+  --chrome-egt-sidebar-shadow: 2px 0 8px -2px rgb(0 0 0 / 0.06);
+  --chrome-input-pane-focus-border-light: hsl(
+    from var(--color-brand) h s l /
+    0.4
+  );
+  --chrome-input-pane-light-focus-ring:
+    0 2px 16px -4px hsl(from var(--color-brand) h s l / 0.1),
+    0 0 0 1px hsl(from var(--color-brand) h s l / 0.06);
+  --chrome-suggestion-hover: hsl(4 60% 65% / 0.4);
+  --chrome-suggestion-hover-shadow-light: 0 4px 16px -4px
+    hsl(from var(--color-brand) h s l / 0.08);
+  --chrome-user-msg-border-light: hsl(4 35% 40%);
+  --chrome-msg-action-text: hsl(4 60% 52%);
+  --chrome-msg-action-text-hover: hsl(4 70% 42%);
+
+  --chrome-input-pane-dark-gradient: linear-gradient(
+    180deg,
+    hsl(0 0% 17% / 0.9),
+    hsl(4 20% 12% / 0.92)
+  );
+  --chrome-input-pane-dark-border: hsl(5 22% 24% / 0.58);
+  --chrome-input-pane-dark-shadow:
+    0 18px 45px -28px hsl(0 0% 0% / 0.72),
+    0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
+    0 0 34px -28px hsl(from var(--color-brand) h s l / 0.4);
+  --chrome-input-pane-dark-focus:
+    0 20px 48px -28px hsl(0 0% 0% / 0.78),
+    0 0 0 1px hsl(from var(--color-brand) h s l / 0.12),
+    0 0 38px -24px hsl(from var(--color-brand) h s l / 0.32);
+  --chrome-input-pane-focus-border-dark: hsl(
+    from var(--color-brand) h s l /
+    0.42
+  );
+
+  --chrome-suggestion-dark-gradient: linear-gradient(
+    180deg,
+    hsl(0 0% 16% / 0.84),
+    hsl(4 18% 13% / 0.88)
+  );
+  --chrome-suggestion-dark-border: hsl(4 18% 24% / 0.5);
+  --chrome-suggestion-dark-shadow:
+    0 14px 34px -28px hsl(0 0% 0% / 0.75),
+    0 0 24px -24px hsl(from var(--color-brand) h s l / 0.26);
+  --chrome-suggestion-dark-hover-border: hsl(
+    from var(--color-brand) h s l /
+    0.28
+  );
+  --chrome-suggestion-dark-hover-shadow:
+    0 16px 36px -28px hsl(0 0% 0% / 0.82),
+    0 0 28px -22px hsl(from var(--color-brand) h s l / 0.32);
+
+  --chrome-user-msg-border-dark: hsl(4 22% 38% / 0.6);
+  --chrome-msg-action-dark: var(--color-brand);
+  --chrome-msg-action-dark-hover: hsl(4 84% 56%);
+  /* Assistant bubbles: same solid white as header/footer chrome (glass surfaces). */
+  --chrome-assistant-bubble-light: var(--chrome-glass-surface-light);
+  --chrome-assistant-bubble-dark: hsl(220 18% 16% / 0.75);
+  --chrome-assistant-border-dark: hsl(220 14% 28% / 0.45);
+
+  /*
+   * Light-mode palette — neutral, harmonious, no warm/pink cast.
+   * All chrome surfaces (sidebar, header, footer, body canvas) pull from
+   * --background so they read as one continuous plane. Elevated surfaces
+   * (cards, popovers, composer, suggestion chips, assistant bubbles) pull
+   * from --chrome-glass-surface-light (pure white) so they visibly lift
+   * off the canvas without any color shift.
+   *
+   * WCAG AA compliant: 4.5:1 minimum contrast ratio for normal text.
+   */
+  --background: hsl(0 0% 98%);
+  --foreground: hsl(0 0% 15%);
+
+  --card: var(--chrome-glass-surface-light);
+  --card-foreground: hsl(0 0% 15%);
+  --popover: var(--chrome-glass-surface-light);
+  --popover-foreground: hsl(0 0% 15%);
+
+  --primary: var(--color-brand);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(4 55% 95%);
+  --secondary-foreground: hsl(4 70% 30%);
+  --muted: hsl(0 0% 94%);
+  --muted-foreground: hsl(0 0% 32%);
+  --accent: var(--color-brand);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: var(--color-brand);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 89%);
+  --input: hsl(0 0% 91%);
+  --ring: var(--color-brand);
+
+  --chart-1: var(--color-brand);
+  --chart-2: hsl(25 75% 50%);
+  --chart-3: hsl(350 70% 50%);
+  --chart-4: hsl(280 50% 55%);
+  --chart-5: hsl(45 80% 50%);
+
+  /* Light theme: sidebar = same background as header/footer (--background) */
+  --sidebar: var(--background);
+  --sidebar-background: var(--background);
+  --sidebar-foreground: hsl(0 0% 15%);
+  --sidebar-primary: var(--color-brand);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(0 0% 0% / 0.06);
+  --sidebar-accent-foreground: hsl(0 0% 15%);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--color-brand);
+
+  --user-message-bg: hsl(from var(--color-brand) h s l / 0.08);
+  --assistant-message-bg: var(--chrome-glass-surface-light);
+  --input-pane-bg: var(--chrome-glass-surface-light);
+
+  /* Code editor (CodeMirror) — light: app background; dark: zinc-800 */
+  --code-editor-bg: var(--background);
+  --code-editor-selection: rgb(228 228 231); /* zinc-200 */
+}
+
+.dark {
+  --background: hsl(0 0% 8%);
+  --foreground: hsl(0 0% 92%);
+
+  --card: hsl(0 0% 11%);
+  --card-foreground: hsl(0 0% 92%);
+  --popover: hsl(0 0% 11%);
+  --popover-foreground: hsl(0 0% 92%);
+
+  --primary: var(--color-brand);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(0 0% 16%);
+  --secondary-foreground: hsl(0 0% 90%);
+  --muted: hsl(0 0% 20%);
+  --muted-foreground: hsl(0 0% 72%);
+  --accent: var(--color-brand);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: var(--color-brand);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 26%);
+  --input: hsl(0 0% 16%);
+  --ring: var(--color-brand);
+
+  --chart-1: var(--color-brand);
+  --chart-2: hsl(25 75% 50%);
+  --chart-3: hsl(350 70% 50%);
+  --chart-4: hsl(280 50% 55%);
+  --chart-5: hsl(45 80% 50%);
+
+  /* Dark theme: sidebar = same background as header/footer (--background) */
+  --sidebar: var(--background);
+  --sidebar-background: var(--background);
+  --sidebar-foreground: hsl(0 0% 88%);
+  --sidebar-primary: var(--color-brand);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(0 0% 100% / 0.07);
+  --sidebar-accent-foreground: hsl(0 0% 92%);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--color-brand);
+
+  --user-message-bg: hsl(from var(--color-brand) h s l / 0.2);
+  --assistant-message-bg: hsl(0 0% 100% / 0.1);
+  --input-pane-bg: hsl(0 0% 11% / 0.7);
+
+  --code-editor-bg: rgb(39 39 42); /* zinc-800 */
+  --code-editor-selection: rgb(24 24 27); /* zinc-900 */
+}

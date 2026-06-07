@@ -1,0 +1,65 @@
+# AI Chatbot Service
+# Usage: docker compose up -d
+# Environment variables from GitLab CI or .env.local
+
+services:
+  ai-chatbot:
+    image: ${CI_REGISTRY_IMAGE:-rd-gitlab.egt-bg.com:4567/sm/ai_center}/ai_chatbot:${CI_COMMIT_SHORT_SHA:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: always
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_chatbot
+    ports:
+      - "${SERVICE_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - QDRANT_URL=${QDRANT_URL}
+      - QDRANT_VECTOR_DIM=${QDRANT_VECTOR_DIM:-1024}
+      - CRAWLER_URL=${CRAWLER_URL}
+      - ATLASSIAN_MCP=${ATLASSIAN_MCP}
+      - CODE_EXECUTION_SERVICE_URL=${CODE_EXECUTION_SERVICE_URL}
+      - SEARXNG_URL=${SEARXNG_URL}
+      - PROVIDER_API_KEY=${PROVIDER_API_KEY}
+      - PROVIDER_BASE_URL=${PROVIDER_BASE_URL}
+      - PROVIDER_MODEL=${PROVIDER_MODEL}
+      - PROVIDER_TITLE_MODEL=${PROVIDER_TITLE_MODEL}
+      - PROVIDER_ARTIFACT_MODEL=${PROVIDER_ARTIFACT_MODEL}
+      - PROVIDER_REASONING_MODEL=${PROVIDER_REASONING_MODEL}
+      - PROVIDER_EMBEDDING_MODEL=${PROVIDER_EMBEDDING_MODEL}
+      - AUTH_EMAIL_GROUPS=${AUTH_EMAIL_GROUPS}
+      - AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
+      - AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}
+      - AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '${CHATBOT_CPU_LIMIT:-4.0}'
+          memory: ${CHATBOT_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: '${CHATBOT_CPU_RESERVATION:-1.0}'
+          memory: ${CHATBOT_MEMORY_RESERVATION:-1G}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "false"
+
+networks:
+  app_network:
+    name: ${NETWORK_NAME:-ai_center}
+    driver: bridge

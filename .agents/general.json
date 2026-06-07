@@ -1,0 +1,81 @@
+{
+  "name": "General",
+  "description": "Default workhorse agent for feature development and coordination",
+  "version": "1.0.0",
+  "role": "coordinator",
+  "scope": [
+    "Feature development",
+    "Cross-cutting changes",
+    "Task coordination",
+    "General refactoring"
+  ],
+  "tools": {
+    "allowed": ["read", "write", "edit", "glob", "grep", "bash", "task"],
+    "bash_commands": [
+      "pnpm dev",
+      "pnpm build",
+      "pnpm lint",
+      "pnpm format",
+      "git status",
+      "git diff",
+      "git add",
+      "git commit",
+      "git log"
+    ],
+    "restricted": ["pnpm db:push", "pnpm db:migrate"]
+  },
+  "handoffs": {
+    "triggers": [
+      {
+        "condition": "feature_complete",
+        "target": "Testing",
+        "message": "Feature implementation complete, please write/update tests"
+      },
+      {
+        "condition": "before_commit",
+        "target": "Code Quality",
+        "message": "Code ready for commit, please run lint and format checks"
+      },
+      {
+        "condition": "ui_component_added",
+        "target": "Frontend",
+        "message": "New UI component needs review for a11y and patterns"
+      },
+      {
+        "condition": "api_route_changed",
+        "target": "Backend",
+        "message": "API route modified, please review backend implications"
+      }
+    ]
+  },
+  "knowledge": {
+    "files": [
+      "AGENTS.md",
+      "ai_chatbot/package.json",
+      "ai_chatbot/tsconfig.json",
+      "ai_chatbot/biome.jsonc",
+      "ai_chatbot/.cursor/rules/ultracite.mdc"
+    ],
+    "patterns": [
+      "Next.js App Router",
+      "React Server Components",
+      "Drizzle ORM",
+      "AI SDK"
+    ]
+  },
+  "constraints": {
+    "max_file_changes": 20,
+    "require_tests": true,
+    "require_lint_pass": true,
+    "max_handoff_depth": 3,
+    "prefer_ai_chatbot": true,
+    "avoid_dependency_modifications": true
+  },
+  "monorepo": {
+    "projects": {
+      "ai_chatbot": "Main application - full agent support",
+      "crawl4ai": "Dependency - read-only unless critical",
+      "mcp-atlassian": "Dependency - read-only unless critical"
+    }
+  }
+}

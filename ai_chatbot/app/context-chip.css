@@ -1,0 +1,63 @@
+/* ==========================================================================
+   ContextChip color tokens
+   - Color values live here (as CSS variables) to avoid "magic colors"
+     inside TSX and to keep light/dark theming centralized.
+   ========================================================================== */
+
+.context-chip {
+  background-color: var(--context-chip-bg);
+  color: var(--context-chip-text);
+}
+
+.context-chip__bar {
+  /* SVG uses stroke="currentColor", so set currentColor from this variable. */
+  color: var(--context-chip-bar);
+}
+
+.context-chip[data-tone="red"] {
+  --context-chip-bg: rgba(239, 68, 68, 0.1);
+  --context-chip-text: #ef4444;
+  --context-chip-bar: #ef4444;
+}
+
+.dark .context-chip[data-tone="red"] {
+  --context-chip-bg: rgba(248, 113, 113, 0.15);
+  --context-chip-text: #f87171;
+  --context-chip-bar: #f87171;
+}
+
+.context-chip[data-tone="orange"] {
+  --context-chip-bg: rgba(249, 115, 22, 0.1);
+  --context-chip-text: #f97316;
+  --context-chip-bar: #f97316;
+}
+
+.dark .context-chip[data-tone="orange"] {
+  --context-chip-bg: rgba(251, 146, 60, 0.15);
+  --context-chip-text: #fb923c;
+  --context-chip-bar: #fb923c;
+}
+
+.context-chip[data-tone="yellow"] {
+  --context-chip-bg: rgba(234, 179, 8, 0.1);
+  --context-chip-text: #ca8a04; /* yellow-600 */
+  --context-chip-bar: #eab308; /* yellow-500 */
+}
+
+.dark .context-chip[data-tone="yellow"] {
+  --context-chip-bg: rgba(250, 204, 21, 0.15);
+  --context-chip-text: #fde047; /* yellow-300 */
+  --context-chip-bar: #facc15; /* yellow-400 */
+}
+
+.context-chip[data-tone="indigo"] {
+  --context-chip-bg: rgba(99, 102, 241, 0.1);
+  --context-chip-text: #6366f1; /* indigo-500 */
+  --context-chip-bar: #818cf8; /* indigo-400 */
+}
+
+.dark .context-chip[data-tone="indigo"] {
+  --context-chip-bg: rgba(129, 140, 248, 0.15);
+  --context-chip-text: #a5b4fc; /* indigo-300 */
+  --context-chip-bar: #a5b4fc; /* indigo-300 */
+}

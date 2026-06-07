@@ -1,0 +1,54 @@
+# Crawl4AI Service
+# Usage: docker compose up -d
+
+services:
+  crawl4ai:
+    image: ${CI_REGISTRY_IMAGE:-rd-gitlab.egt-bg.com:4567/sm/ai_center}/crawl4ai:${CI_COMMIT_SHORT_SHA:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_TYPE: ${INSTALL_TYPE:-default}
+        ENABLE_GPU: ${ENABLE_GPU:-false}
+    pull_policy: always
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_crawl4ai
+    environment:
+      - PORT=11235
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY:-}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+    volumes:
+      - /dev/shm:/dev/shm
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '${CRAWL4AI_CPU_LIMIT:-2.0}'
+          memory: ${CRAWL4AI_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: '${CRAWL4AI_CPU_RESERVATION:-0.5}'
+          memory: ${CRAWL4AI_MEMORY_RESERVATION:-1G}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "false"
+
+networks:
+  app_network:
+    name: ${NETWORK_NAME:-ai_center}
+    driver: bridge

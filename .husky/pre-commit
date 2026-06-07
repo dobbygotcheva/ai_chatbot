@@ -1,0 +1,26 @@
+#!/bin/sh
+# Pre-commit hook: Enforce version bump in code-exec-svc/package.json
+
+# Check if any code-exec-svc files changed (excluding package.json)
+CODE_CHANGED=$(git diff --cached --name-only | grep "^code-exec-svc/" | grep -v "package.json$" | wc -l)
+
+if [ "$CODE_CHANGED" -gt 0 ]; then
+  # Check if version field specifically changed
+  VERSION_CHANGE=$(git diff --cached code-exec-svc/package.json | grep -E '^\+.*"version"' | wc -l)
+  
+  if [ "$VERSION_CHANGE" -eq 0 ]; then
+    echo "❌ ERROR: code-exec-svc code changed but package.json version not bumped!"
+    echo ""
+    echo "Please bump the version in code-exec-svc/package.json before committing."
+    echo "Use: pnpm version patch -C code-exec-svc"
+    echo "     pnpm version minor -C code-exec-svc"
+    echo "     pnpm version major -C code-exec-svc"
+    echo ""
+    echo "Or skip this check (not recommended):"
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
+  fi
+fi
+
+exit 0

@@ -1,0 +1,26 @@
+# Agent handoff logs (runtime only)
+.agents/handoffs/*.json
+.agents/handoffs/handoff-log.json
+
+# Changelog draft (not committed)
+ai_chatbot/changelog/draft.md
+
+# Node modules
+node_modules
+ai_chatbot/node_modules
+code-exec-svc/node_modules
+code-exec-svc/dist
+
+# Local environment files
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Planning files
+.sisyphus/
+
+# Test artifacts
+tests/e2e/screenshots/*.png
+tests/.auth/debug-*
+tests/.auth/*.json

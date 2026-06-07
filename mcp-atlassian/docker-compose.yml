@@ -1,0 +1,49 @@
+# MCP Atlassian Service
+# Usage: docker compose up -d
+
+services:
+  mcp-atlassian:
+    image: ${CI_REGISTRY_IMAGE:-rd-gitlab.egt-bg.com:4567/sm/ai_center}/mcp-atlassian:${CI_COMMIT_SHORT_SHA:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: always
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_mcp_atlassian
+    environment:
+      - PORT=8000
+      - CONFLUENCE_URL=${CONFLUENCE_URL}
+      - JIRA_URL=${JIRA_URL}
+      - READ_ONLY_MODE=${READ_ONLY_MODE:-true}
+      - TRANSPORT=streamable-http
+      - TOOLSETS=all
+      - MCP_VERY_VERBOSE=false
+      - MCP_ALLOWED_URL_DOMAINS=${MCP_ALLOWED_URL_DOMAINS}
+      - ATLASSIAN_OAUTH_ENABLE=${ATLASSIAN_OAUTH_ENABLE:-true}
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '${MCP_ATLASSIAN_CPU_LIMIT:-1.0}'
+          memory: ${MCP_ATLASSIAN_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: '${MCP_ATLASSIAN_CPU_RESERVATION:-0.25}'
+          memory: ${MCP_ATLASSIAN_MEMORY_RESERVATION:-128M}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "false"
+
+networks:
+  app_network:
+    name: ${NETWORK_NAME:-ai_center}
+    driver: bridge

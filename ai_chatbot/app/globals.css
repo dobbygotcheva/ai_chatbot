@@ -1,0 +1,868 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+@import "./pulsing_effect/pulse.css";
+@import "./design-tokens.css";
+@import "./context-chip.css";
+
+/* Reserve gutter so Radix/modals don't shift layout; scrollbar hidden on the document only */
+html {
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Portal (and similar full-height shells): hide edge scrollbar, keep scroll */
+[data-portal-main] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-portal-main]::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* include utility classes in streamdown */
+@source "../node_modules/streamdown/dist/index.js";
+
+/* custom variant for setting dark mode programmatically */
+@custom-variant dark (&:is(.dark, .dark *));
+
+/* include plugins */
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
+
+/* PDF export: html2canvas subtree must match light chat even when html.dark */
+.pdf-export-root {
+  color-scheme: light;
+  /* Mirror the light-mode palette in palette.css — neutral off-white canvas, pure-white elevated surfaces. */
+  --background: hsl(0 0% 98%);
+  --foreground: hsl(0 0% 15%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 15%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 15%);
+  --primary: var(--color-brand);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(4 55% 95%);
+  --secondary-foreground: hsl(4 70% 30%);
+  --muted: hsl(0 0% 94%);
+  --muted-foreground: hsl(0 0% 32%);
+  --accent: var(--color-brand);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: var(--color-brand);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 89%);
+  --input: hsl(0 0% 91%);
+  --ring: var(--color-brand);
+  --user-message-bg: hsl(from var(--color-brand) h s l / 0.08);
+  --assistant-message-bg: var(--chrome-glass-surface-light);
+}
+
+/* ==========================================================================
+   THEME DEFINITIONS
+   ========================================================================== */
+
+@theme {
+  /* Fonts */
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
+
+  /* Breakpoints */
+  --breakpoint-toast-mobile: 600px;
+
+  /* Border radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Color mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Glass surfaces (light theme) — same token as suggestion / disclaimer / composer */
+  --color-chrome-glass-surface-light: var(--chrome-glass-surface-light);
+}
+
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  * {
+    @apply border-border outline-border/50;
+  }
+
+  body {
+    @apply text-foreground;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+    background-color: var(--background);
+  }
+
+  html {
+    overflow-x: hidden;
+  }
+}
+
+/* ==========================================================================
+   AUTOFILL OVERRIDES (unlayered)
+   Chrome/Safari autofill UA styles use !important internally.
+   Author CSS *must* use !important to override UA !important — there is
+   no specificity or cascade-layer trick that works here.
+   ========================================================================== */
+
+:root:not(.dark) input:-webkit-autofill,
+:root:not(.dark) input:-webkit-autofill:hover,
+:root:not(.dark) input:-webkit-autofill:focus,
+:root:not(.dark) input:-webkit-autofill:active,
+:root:not(.dark) textarea:-webkit-autofill,
+:root:not(.dark) textarea:-webkit-autofill:hover,
+:root:not(.dark) textarea:-webkit-autofill:focus,
+:root:not(.dark) textarea:-webkit-autofill:active,
+:root:not(.dark) select:-webkit-autofill,
+:root:not(.dark) select:-webkit-autofill:hover,
+:root:not(.dark) select:-webkit-autofill:focus,
+:root:not(.dark) select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--muted) inset !important;
+  box-shadow: 0 0 0 1000px var(--muted) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+}
+
+:root.dark input:-webkit-autofill,
+:root.dark input:-webkit-autofill:hover,
+:root.dark input:-webkit-autofill:focus,
+:root.dark input:-webkit-autofill:active,
+:root.dark textarea:-webkit-autofill,
+:root.dark textarea:-webkit-autofill:hover,
+:root.dark textarea:-webkit-autofill:focus,
+:root.dark textarea:-webkit-autofill:active,
+:root.dark select:-webkit-autofill,
+:root.dark select:-webkit-autofill:hover,
+:root.dark select:-webkit-autofill:focus,
+:root.dark select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--background) inset !important;
+  box-shadow: 0 0 0 1000px var(--background) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@utility -webkit-overflow-scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+@utility touch-pan-y {
+  touch-action: pan-y;
+}
+
+@utility overscroll-behavior-contain {
+  overscroll-behavior: contain;
+}
+
+/* ==========================================================================
+   COMPONENT STYLES (unlayered — beats @layer utilities naturally)
+   ========================================================================== */
+
+/* Skeleton loading states */
+.skeleton {
+  * {
+    pointer-events: none;
+  }
+
+  *[class^="text-"] {
+    color: transparent;
+    @apply rounded-md bg-foreground/20 select-none animate-pulse;
+  }
+
+  .skeleton-bg {
+    @apply bg-foreground/10;
+  }
+
+  .skeleton-div {
+    @apply bg-foreground/20 animate-pulse;
+  }
+}
+
+/* Code editor (ProseMirror) */
+.ProseMirror {
+  outline: none;
+}
+
+/*
+ * CodeMirror overrides — use doubled selectors for specificity (0,2,0)
+ * to beat CodeMirror's JS-injected scoped styles without !important.
+ */
+.cm-editor.cm-editor,
+.cm-gutters.cm-gutters {
+  background-color: var(--code-editor-bg);
+  outline: none;
+}
+
+.cm-editor.cm-editor ::selection {
+  background-color: var(--code-editor-selection);
+}
+
+.cm-editor.cm-editor .cm-selectionBackground {
+  background-color: var(--code-editor-selection);
+}
+
+.cm-activeLine.cm-activeLine,
+.cm-activeLineGutter.cm-activeLineGutter {
+  background-color: transparent;
+}
+
+.cm-activeLine.cm-activeLine {
+  border-radius: 0 0.125rem 0.125rem 0;
+}
+
+.cm-lineNumbers {
+  min-width: 1.75rem;
+}
+
+.cm-foldGutter {
+  min-width: 0.75rem;
+}
+
+.cm-lineNumbers .cm-activeLineGutter.cm-activeLineGutter {
+  border-radius: 0.125rem 0 0 0.125rem;
+}
+
+/* Suggestion highlight */
+.suggestion-highlight {
+  @apply bg-blue-200 hover:bg-blue-300 dark:hover:bg-blue-400/50 dark:text-blue-50 dark:bg-blue-500/40;
+}
+
+/* ==========================================================================
+   SCROLLBAR STYLES
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: --alpha(var(--muted-foreground) / 0.5);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ==========================================================================
+   ANIMATIONS — kept in @layer components for Tailwind ordering
+   ========================================================================== */
+
+@layer components {
+  /* Message entrance – soft pop */
+  @keyframes message-appear {
+    0% {
+      opacity: 0;
+      transform: scale(0.96) translateY(6px);
+    }
+    60% {
+      transform: scale(1.01) translateY(-1px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .message-bubble {
+    animation: message-appear 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  [data-testid="send-button"]:not(:disabled) {
+    transition: transform 0.2s ease;
+  }
+
+  [data-testid="send-button"]:not(:disabled):hover {
+    transform: scale(1.06);
+  }
+
+  [data-testid="send-button"]:not(:disabled):active {
+    transform: scale(0.98);
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
+  }
+}
+
+/* ==========================================================================
+   BRAND OVERRIDES (unlayered)
+   Unlayered CSS beats all @layer rules (including @layer utilities where
+   Tailwind puts bg-*, border-*, etc.). This is the correct cascade mechanism
+   for intentional brand/chrome overrides — no !important needed.
+   ========================================================================== */
+
+/* ── Textarea / suggestion-pane focus resets ─────────────────────────── */
+
+.input-pane textarea:focus,
+.input-pane textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.suggestion-pane button {
+  background: transparent;
+}
+
+.suggestion-pane button:hover {
+  background: transparent;
+}
+
+/* ── Neutral hover/active tint for interactive elements ────────────── */
+
+/* AppSidebar menu — light theme: subtle dark tint; dark theme: white tint */
+:root:not(.dark)
+  [data-sidebar="sidebar"]
+  button[data-slot="sidebar-menu-button"]:hover,
+:root:not(.dark) [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover {
+  background: hsl(0 0% 0% / 0.06);
+  box-shadow: 0 0 0 1px hsl(0 0% 0% / 0.06);
+}
+
+:root.dark
+  [data-sidebar="sidebar"]
+  button[data-slot="sidebar-menu-button"]:hover,
+:root.dark [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover {
+  background: hsl(0 0% 100% / 0.06);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.12);
+}
+
+:root:not(.dark)
+  [data-sidebar="sidebar"]
+  button[data-slot="sidebar-menu-button"][data-active="true"],
+:root:not(.dark)
+  [data-sidebar="sidebar"]
+  [data-sidebar="menu-button"][data-active="true"] {
+  background: hsl(0 0% 0% / 0.08);
+  box-shadow: 0 0 0 1px hsl(0 0% 0% / 0.08);
+}
+
+:root.dark
+  [data-sidebar="sidebar"]
+  button[data-slot="sidebar-menu-button"][data-active="true"],
+:root.dark
+  [data-sidebar="sidebar"]
+  [data-sidebar="menu-button"][data-active="true"] {
+  background: hsl(0 0% 100% / 0.08);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.1);
+}
+
+/* Portal slide-out — grey panel hover/active */
+:root:not(.dark) [data-portal-sidebar] [data-sidebar="menu-button"]:hover {
+  background: hsl(0 0% 0% / 0.06);
+  box-shadow: 0 0 0 1px hsl(0 0% 0% / 0.06);
+}
+
+:root.dark [data-portal-sidebar] [data-sidebar="menu-button"]:hover {
+  background: hsl(0 0% 100% / 0.08);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.1);
+}
+
+:root:not(.dark)
+  [data-portal-sidebar]
+  [data-sidebar="menu-button"][data-active="true"] {
+  background: hsl(0 0% 0% / 0.08);
+  box-shadow: 0 0 0 1px hsl(0 0% 0% / 0.08);
+}
+
+:root.dark
+  [data-portal-sidebar]
+  [data-sidebar="menu-button"][data-active="true"] {
+  background: hsl(0 0% 100% / 0.1);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.12);
+}
+
+/* Dropdown menu items */
+[role="menuitem"]:hover,
+[role="menuitem"]:focus,
+[role="menuitemcheckbox"]:hover,
+[role="menuitemradio"]:hover {
+  background: hsl(0 0% 50% / 0.07);
+}
+
+:root.dark [role="menuitem"]:hover,
+:root.dark [role="menuitem"]:focus,
+:root.dark [role="menuitemcheckbox"]:hover,
+:root.dark [role="menuitemradio"]:hover {
+  background: hsl(0 0% 100% / 0.06);
+}
+
+/* Transparent layout containers so the meteor background shows through (dark only) */
+:root.dark [role="main"],
+:root.dark main,
+:root.dark .sidebar-inset,
+:root.dark .group\/sidebar-wrapper,
+:root.dark [data-variant="sidebar"],
+:root.dark .group[data-side="left"],
+:root.dark .group[data-side="left"] > div {
+  background: transparent;
+}
+
+:root.dark .bg-background[data-sidebar="sidebar"],
+:root.dark .bg-background[data-sidebar="menu-button"],
+:root.dark .bg-background[data-sidebar="input"],
+:root.dark .bg-background[data-role="user"],
+:root.dark .bg-background[data-role="assistant"] {
+  background: var(--background);
+}
+
+/* ==========================================================================
+   LIGHT MODE — EGT Brand overrides (unlayered)
+   ========================================================================== */
+
+:root:not(.dark),
+:root:not(.dark) body {
+  background-color: var(--background);
+}
+
+:root:not(.dark) .input-pane {
+  overflow: visible;
+  background: var(--chrome-glass-surface-light);
+  border-radius: 1.5rem;
+  border: 1px solid hsl(0 0% 86%);
+  box-shadow:
+    0 4px 28px -10px hsl(0 0% 0% / 0.09),
+    0 0 0 1px hsl(0 0% 0% / 0.025) inset;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+:root:not(.dark) .input-pane:focus-within {
+  border-color: var(--chrome-input-pane-focus-border-light);
+  box-shadow:
+    0 8px 36px -14px hsl(0 0% 0% / 0.12),
+    0 0 0 1px hsl(from var(--color-brand) h s l / 0.12),
+    0 0 0 4px hsl(from var(--color-brand) h s l / 0.08);
+}
+
+:root:not(.dark) .suggestion-pane {
+  background: var(--chrome-glass-surface-light);
+  border-radius: 1rem;
+  border: 1px solid hsl(0 0% 88% / 0.95);
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 6px 22px -10px hsl(0 0% 0% / 0.08);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+:root:not(.dark) .suggestion-pane:hover {
+  border-color: var(--chrome-suggestion-hover);
+  box-shadow: var(--chrome-suggestion-hover-shadow-light);
+  transform: translateY(-1px);
+}
+
+:root:not(.dark) [data-role="user"] [data-testid="message-content"] {
+  background: #fff;
+  color: var(--foreground);
+  border: 1px solid var(--chrome-input-pane-light-border);
+  box-shadow: 0 1px 4px -1px hsl(0 0% 0% / 0.08);
+}
+
+:root:not(.dark) [data-role="assistant"] [data-testid="message-content"] {
+  background: var(--chrome-assistant-bubble-light);
+  border: 1px solid var(--chrome-input-pane-light-border);
+  box-shadow: 0 1px 4px -1px hsl(0 0% 0% / 0.04);
+}
+
+:root:not(.dark) .message-actions button {
+  color: var(--chrome-msg-action-text);
+}
+
+:root:not(.dark) .message-actions button:hover {
+  color: var(--chrome-msg-action-text-hover);
+}
+
+/*
+ * Sidebar (chat): same background as header/footer (--background) —
+ * no blur/gradient, to blend with the rest of the chrome.
+ */
+:root:not(.dark) [data-sidebar="sidebar"] {
+  background-color: var(--background);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-right: 1px solid var(--border);
+  box-shadow: var(--chrome-egt-sidebar-shadow);
+}
+
+/*
+ * Portal slide-out (hamburger): same background as header/footer.
+ */
+:root:not(.dark) [data-portal-sidebar] {
+  background-color: var(--background);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ==========================================================================
+   DARK MODE — EGT Brand overrides (unlayered)
+   ========================================================================== */
+
+:root.dark [data-role="user"] [data-testid="message-content"] {
+  background: var(--chrome-assistant-bubble-dark);
+  color: var(--foreground);
+  border: 1px solid var(--chrome-assistant-border-dark);
+  box-shadow: 0 1px 8px -2px hsl(0 0% 0% / 0.3);
+}
+
+:root.dark [data-role="assistant"] [data-testid="message-content"] {
+  background: var(--chrome-assistant-bubble-dark);
+  border: 1px solid var(--chrome-assistant-border-dark);
+  box-shadow: 0 1px 8px -2px hsl(0 0% 0% / 0.35);
+}
+
+:root.dark .message-actions button {
+  color: var(--chrome-msg-action-dark);
+}
+
+:root.dark .message-actions button:hover {
+  color: var(--chrome-msg-action-dark-hover);
+}
+
+:root.dark .input-pane {
+  overflow: visible;
+  background: var(--chrome-input-pane-dark-gradient);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 1.25rem;
+  border: 1px solid var(--chrome-input-pane-dark-border);
+  box-shadow: var(--chrome-input-pane-dark-shadow);
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+:root.dark .input-pane:focus-within {
+  border-color: var(--chrome-input-pane-focus-border-dark);
+  box-shadow: var(--chrome-input-pane-dark-focus);
+}
+
+:root.dark .suggestion-pane {
+  background: var(--chrome-suggestion-dark-gradient);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1rem;
+  border: 1px solid var(--chrome-suggestion-dark-border);
+  box-shadow: var(--chrome-suggestion-dark-shadow);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+:root.dark .suggestion-pane:hover {
+  border-color: var(--chrome-suggestion-dark-hover-border);
+  box-shadow: var(--chrome-suggestion-dark-hover-shadow);
+  transform: translateY(-1px);
+}
+
+:root.dark [data-sidebar="sidebar"] {
+  background: var(--background);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-right: 1px solid var(--border);
+  box-shadow: var(--chrome-egt-sidebar-shadow);
+}
+
+:root.dark [data-portal-sidebar] {
+  background-color: var(--background);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ==========================================================================
+   LOGIN PAGE — brand overrides (unlayered)
+   ========================================================================== */
+
+.auth-login-radial-glow {
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 45%,
+    rgb(var(--brand-rgb) / 0.06) 0%,
+    transparent 70%
+  );
+}
+
+.auth-login-card {
+  background: linear-gradient(
+    170deg,
+    color-mix(in hsl, var(--card) 94%, hsl(0 0% 100%)) 0%,
+    color-mix(in hsl, var(--card) 88%, hsl(0 0% 0% / 0.06)) 100%
+  );
+  border: 1px solid var(--border);
+  box-shadow:
+    0 25px 60px hsl(0 0% 0% / 0.08),
+    0 0 0 1px hsl(0 0% 0% / 0.04);
+}
+
+:root.dark .auth-login-card {
+  background: linear-gradient(
+    170deg,
+    rgba(30, 30, 35, 0.85) 0%,
+    rgba(20, 20, 25, 0.9) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.auth-login-form label {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+:root.dark .auth-login-form label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-login-form input {
+  background-color: hsl(0 0% 93%);
+  border: 1px solid hsl(0 0% 80%);
+  border-radius: 10px;
+  color: var(--foreground);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  padding: 11px 14px;
+  font-size: 0.9rem;
+}
+
+:root.dark .auth-login-form input {
+  background-color: hsl(0 0% 18%);
+  border: 1px solid hsl(0 0% 34%);
+  color: #fff;
+}
+
+.auth-login-form input::placeholder {
+  color: color-mix(in hsl, var(--muted-foreground) 65%, transparent);
+}
+
+:root.dark .auth-login-form input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.auth-login-form input:focus,
+.auth-login-form input:focus-visible {
+  border-color: hsl(0 0% 62%);
+  box-shadow: 0 0 0 1px hsl(0 0% 0% / 0.12);
+  outline: none;
+  background-color: hsl(0 0% 93%);
+}
+
+:root.dark .auth-login-form input:focus,
+:root.dark .auth-login-form input:focus-visible {
+  border-color: hsl(0 0% 48%);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.12);
+  background-color: hsl(0 0% 20%);
+}
+
+:root:not(.dark) .auth-login-form input:-webkit-autofill,
+:root:not(.dark) .auth-login-form input:-webkit-autofill:hover,
+:root:not(.dark) .auth-login-form input:-webkit-autofill:focus,
+:root:not(.dark) .auth-login-form input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px hsl(0 0% 93%) inset !important;
+  box-shadow: 0 0 0 1000px hsl(0 0% 93%) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  border: 1px solid hsl(0 0% 80%);
+  caret-color: var(--foreground);
+}
+
+:root.dark .auth-login-form input:-webkit-autofill,
+:root.dark .auth-login-form input:-webkit-autofill:hover,
+:root.dark .auth-login-form input:-webkit-autofill:focus,
+:root.dark .auth-login-form input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px hsl(0 0% 18%) inset !important;
+  box-shadow: 0 0 0 1000px hsl(0 0% 18%) inset !important;
+  -webkit-text-fill-color: #fff !important;
+  border: 1px solid hsl(0 0% 34%);
+  caret-color: #fff;
+}
+
+.auth-login-form button[type="submit"] {
+  background: linear-gradient(
+    135deg,
+    var(--color-brand) 0%,
+    var(--login-brand-gradient-end) 100%
+  );
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgb(var(--brand-rgb) / 0.25);
+}
+
+.auth-login-form button[type="submit"]:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--login-brand-gradient-hover-start) 0%,
+    var(--login-brand-gradient-hover-end) 100%
+  );
+  box-shadow: 0 6px 20px rgb(var(--brand-rgb) / 0.35);
+}
+
+/* ==========================================================================
+   BRAND UTILITIES
+   ========================================================================== */
+
+/* Brand-tinted shadows (EGT) — used instead of rgba(228,35,20,…) in TSX */
+@layer utilities {
+  .shadow-brand-glow-lg {
+    box-shadow: 0 0 24px rgb(var(--brand-rgb) / 0.45);
+  }
+
+  .shadow-brand-icon {
+    box-shadow: 0 2px 8px rgb(var(--brand-rgb) / 0.32);
+  }
+
+  .shadow-brand-icon-hover {
+    box-shadow: 0 4px 12px rgb(var(--brand-rgb) / 0.42);
+  }
+}
+
+/* Portal sidebar — overlay only, no push */
+[data-portal-main] {
+  transition: none;
+}
+
+/* Sidebar chat list - reuse global thin scrollbar */
+#sidebar-chat-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* ==========================================================================
+   SIDEBAR HISTORY COMPONENT
+   ========================================================================== */
+
+/* Chat list scroll container */
+.sidebar-chat-list {
+  height: 288px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: auto;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Skeleton loading animation width variants */
+.skeleton-width-44 {
+  --skeleton-width: 44%;
+}
+
+.skeleton-width-32 {
+  --skeleton-width: 32%;
+}
+
+.skeleton-width-28 {
+  --skeleton-width: 28%;
+}
+
+.skeleton-width-64 {
+  --skeleton-width: 64%;
+}
+
+.skeleton-width-52 {
+  --skeleton-width: 52%;
+}

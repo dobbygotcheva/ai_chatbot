@@ -1,0 +1,92 @@
+# Proxy Server CI/CD Pipeline
+# Builds and deploys the proxy-server service
+
+variables:
+  PROXY_IMAGE: $CI_REGISTRY_IMAGE/proxy
+
+# Build proxy-server Docker image
+build:proxy:
+  stage: build
+  image: docker:24
+  services: []
+  variables:
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🔨 Building proxy-server image..."
+      docker build -t $PROXY_IMAGE:$CI_COMMIT_SHORT_SHA -t $PROXY_IMAGE:latest ./proxy-server
+      echo "📤 Pushing images..."
+      docker push $PROXY_IMAGE:$CI_COMMIT_SHORT_SHA
+      docker push $PROXY_IMAGE:latest
+      echo "✅ proxy-server built and pushed"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - proxy-server/**/*
+        - .gitlab-ci.yml
+
+# Deploy to staging
+deploy-staging:proxy:
+  stage: deploy-staging
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker-staging.sock
+    NETWORK_NAME: ai_center_staging
+    CONTAINER_NAME_PREFIX: ai_center_staging
+    PROXY_PORT: 3003
+    POSTGRES_URL: postgresql://postgres:postgres@ai_center_staging_postgres:5432/ai_chatbot
+    ENCRYPTION_KEY: $ENCRYPTION_KEY_STAGING
+    UPSTREAM_BASE_URL: $PROVIDER_BASE_URL_STAGING
+  environment:
+    name: staging
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🚀 Deploying proxy-server to staging..."
+      docker pull $PROXY_IMAGE:$CI_COMMIT_SHORT_SHA
+      cd proxy-server
+      docker compose up -d
+      echo "✅ proxy-server deployed to staging"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "development"
+      changes:
+        - proxy-server/**/*
+        - .gitlab-ci.yml
+
+# Deploy to production
+deploy-prod:proxy:
+  stage: deploy-prod
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker-prod.sock
+    NETWORK_NAME: ai_center_prod
+    CONTAINER_NAME_PREFIX: ai_center_prod
+    PROXY_PORT: 3002
+    POSTGRES_URL: postgresql://postgres:postgres@ai_center_prod_postgres:5432/ai_chatbot_prod
+    ENCRYPTION_KEY: $ENCRYPTION_KEY_PROD
+    UPSTREAM_BASE_URL: $PROVIDER_BASE_URL_PROD
+  environment:
+    name: production
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🚀 Deploying proxy-server to production..."
+      docker pull $PROXY_IMAGE:$CI_COMMIT_SHORT_SHA
+      cd proxy-server
+      docker compose up -d
+      echo "✅ proxy-server deployed to production"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - proxy-server/**/*
+        - .gitlab-ci.yml

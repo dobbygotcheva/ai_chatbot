@@ -1,0 +1,253 @@
+# Root GitLab CI/CD Pipeline - Monorepo Orchestration  
+# Uses include:rules:changes to trigger per-project pipelines based on file changes
+# Pattern from: https://about.gitlab.com/blog/building-a-gitlab-ci-cd-pipeline-for-a-monorepo-the-easy-way/
+
+stages:
+  - test
+  - build
+  - deploy-staging
+  - deploy-prod
+
+# Include per-project pipelines with conditional execution
+include:
+  # AI Chatbot
+  - local: '/ai_chatbot/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - ai_chatbot/**/*
+          - .gitlab-ci.yml
+
+  # SearXNG Search
+  - local: '/searxng/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - searxng/**/*
+          - .gitlab-ci.yml
+
+  # Crawl4AI
+  - local: '/crawl4ai/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - crawl4ai/**/*
+          - .gitlab-ci.yml
+
+  # MCP Atlassian
+  - local: '/mcp-atlassian/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - mcp-atlassian/**/*
+          - .gitlab-ci.yml
+
+  # Proxy Server
+  - local: '/proxy-server/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - proxy-server/**/*
+          - .gitlab-ci.yml
+
+  # Code Execution Service
+  - local: '/code-exec-svc/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - code-exec-svc/**/*
+          - .gitlab-ci.yml
+
+  # Infrastructure (Postgres + Qdrant)
+  - local: '/postgres/.gitlab-ci.yml'
+    rules:
+      - changes:
+          - postgres/**/*
+          - .gitlab-ci.yml
+
+
+# Combined lint job for all TypeScript/JavaScript projects
+lint:
+  stage: test
+  image: node:22-alpine
+  script:
+    # Lint ai_chatbot
+    - cd ai_chatbot
+    - corepack enable pnpm
+    - pnpm install --frozen-lockfile --prefer-offline
+    - pnpm lint
+    - pnpm exec tsc --noEmit
+    # Lint code-exec-svc
+    - cd "${CI_PROJECT_DIR}/code-exec-svc"
+    - corepack enable pnpm
+    - pnpm install --frozen-lockfile --prefer-offline
+    - pnpm lint
+    - pnpm exec tsc --noEmit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_BRANCH == "main"
+  allow_failure: false
+
+# Rust lint for proxy server
+lint:rust:
+  stage: test
+  image: rust:latest
+  script:
+    - cd proxy-server
+    - rustup component add rustfmt clippy
+    - cargo fmt --check
+    - cargo clippy -- -D warnings
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - changes:
+        - proxy-server/**/*
+  allow_failure: false
+
+# Python lint for MCP Atlassian
+
+# Unit and integration tests for ai_chatbot
+test:ai_chatbot:
+  stage: test
+  image: node:22-alpine
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: ai_chatbot_test
+    POSTGRES_URL: "postgresql://postgres:postgres@postgres:5432/ai_chatbot_test"
+    NODE_ENV: "test"
+    AUTH_SECRET: "test-build-secret-not-used-in-production"
+    PROVIDER_API_KEY: "test-key"
+    PROVIDER_BASE_URL: "http://localhost:8080"
+    PROVIDER_MODEL: "test-model"
+    QDRANT_URL: "http://localhost:6333"
+    ENCRYPTION_KEY: "3cff04a462879db250cc069aff9c645db58ba96241259a7033fe59e54dca61ad"
+  script:
+    - cd ai_chatbot
+    - corepack enable pnpm
+    - pnpm install --frozen-lockfile --prefer-offline
+    - pnpm test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - changes:
+        - ai_chatbot/**/*
+  allow_failure: false
+
+# Test code-exec-svc
+test:code-exec-svc:
+  stage: test
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker.sock
+  before_script:
+    - apk add --no-cache nodejs npm
+    - npm install -g pnpm
+    - cd code-exec-svc
+    - pnpm install --frozen-lockfile --prefer-offline
+  script:
+    - pnpm test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - changes:
+        - code-exec-svc/**/*
+  allow_failure: false
+
+# E2E tests for ai_chatbot using Playwright
+test:e2e:
+  stage: test
+  image: $CI_REGISTRY_IMAGE/playwright-e2e:latest
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: ai_chatbot_test
+    POSTGRES_URL: "postgresql://postgres:postgres@postgres:5432/ai_chatbot_test"
+    CODE_EXECUTION_SERVICE_URL: "http://localhost:5002"
+    QDRANT_URL: "http://localhost:6333"
+    NODE_ENV: "test"
+    AUTH_SECRET: "test-build-secret-not-used-in-production"
+    ENCRYPTION_KEY: "3cff04a462879db250cc069aff9c645db58ba96241259a7033fe59e54dca61ad"
+    PROVIDER_API_KEY: "8851ba3d-7315-4dc6-b844-5cbbe96c7665"
+    PROVIDER_BASE_URL: "https://ai-api.egt-digital.com/gateway/v1/"
+    PROVIDER_MODEL: "foundation"
+    AZURE_AD_TENANT_ID: "build-time-azure-ad-tenant-id"
+    AZURE_AD_CLIENT_ID: "build-time-azure-ad-client-id"
+    AZURE_AD_CLIENT_SECRET: "build-time-azure-ad-client-secret"
+    M365_BASE_URL: "http://localhost:8080"
+    TURBOPACK_ROOT: "/builds/sm/ai_center/ai_chatbot"
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-pnpm
+    paths:
+      - ai_chatbot/.pnpm-store/
+  before_script:
+    - cd $CI_PROJECT_DIR/ai_chatbot
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile --prefer-offline
+    - npx playwright install chromium
+    - until (echo > /dev/tcp/postgres/5432) 2>/dev/null; do echo "Waiting for PostgreSQL..."; sleep 2; done
+    - echo "📦 Tagging runtime images for code-exec-svc..."
+    - docker tag $CODE_EXEC_SVC_IMAGE:python-latest code-exec-python:latest
+    - docker tag $CODE_EXEC_SVC_IMAGE:node-latest code-exec-node:latest
+    - docker tag $CODE_EXEC_SVC_IMAGE:bash-latest code-exec-bash:latest
+    - echo "✅ Runtime images tagged"
+    - echo "🚀 Starting code-exec-svc manually..."
+    - docker run -d --name code-exec-svc -p 5002:5001 -v /var/run/docker.sock:/var/run/docker.sock -e AUTH_DISABLED=true -e PORT=5001 $CODE_EXEC_SVC_IMAGE:$CI_COMMIT_SHORT_SHA
+    - for i in $(seq 1 60); do if curl -sf http://localhost:5002/health > /dev/null 2>&1; then echo "✅ code-exec-svc is healthy!"; break; fi; echo "Waiting for code-exec-svc... ($i/60)"; sleep 1; done
+    - echo "🚀 Starting mock-m365-auth..."
+    - cd $CI_PROJECT_DIR
+    - docker compose -f docker-compose.yml up -d mock-m365-auth
+    - sleep 3
+    - docker compose ps mock-m365-auth
+    - pnpm --dir ai_chatbot db:migrate
+  script:
+    - cd $CI_PROJECT_DIR/ai_chatbot
+    - npx playwright test
+  after_script:
+    - echo "E2E tests completed"
+    - docker stop code-exec-svc 2>/dev/null || true
+    - docker rm code-exec-svc 2>/dev/null || true
+    - echo "=== Code-exec-svc logs ==="
+    - docker logs code-exec-svc 2>&1 | tail -100 || true
+    - echo "=== Running containers ==="
+    - docker ps -a --filter "name=code-exec" || true
+  artifacts:
+    when: always
+    paths:
+      - ai_chatbot/playwright-report/
+      - ai_chatbot/test-results/
+      - ai_chatbot/tests/.auth/
+    reports:
+      junit: ai_chatbot/test-results/e2e-junit-results.xml
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_BRANCH == "main"
+  allow_failure: true
+
+# Build E2E test image (Playwright + dependencies)
+build:e2e-image:
+  stage: build
+  image: docker:24
+  services: []
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🔨 Building E2E test image..."
+      docker build -f Dockerfile.e2e \
+        -t $CI_REGISTRY_IMAGE/playwright-e2e:latest .
+      echo "📤 Pushing image..."
+      docker push $CI_REGISTRY_IMAGE/playwright-e2e:latest
+      echo "✅ E2E image built and pushed"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" && $BUILD_E2E_IMAGE == "true"
+      when: manual
+    - changes:
+        - Dockerfile.e2e

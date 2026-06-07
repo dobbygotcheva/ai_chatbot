@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in to your account</title>
+    <style>
+    * {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
+      background: #000000;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 48px 40px;
+      background: #333333;
+      border-radius: 8px;
+    }
+
+    h1 {
+      margin-bottom: 32px;
+      font-size: 24px;
+      font-weight: 600;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .login-button {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      background: #dc2626;
+      border: none;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .login-button:hover {
+      background: #b91c1c;
+    }
+
+    .divider {
+      margin: 24px 0;
+      border-top: 1px solid #555;
+      position: relative;
+    }
+
+    .divider-text {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      padding: 0 12px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .toggle-btn {
+      width: 100%;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      background: #2563eb;
+      border: none;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .toggle-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .custom-form {
+      display: none;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #444;
+      border-radius: 4px;
+    }
+
+    .custom-form.visible {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      color: #ccc;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      color: #fff;
+      background: #555;
+      border: 1px solid #666;
+      border-radius: 4px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+
+    .group-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      color: #fff;
+      background: #555;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .group-option:hover {
+      background: #666;
+    }
+
+    .group-option input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      background: #16a34a;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .submit-btn:hover {
+      background: #15803d;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <h1>Sign in</h1>
+
+      <form method="POST" action="/login">
+        <input type="hidden" name="user_type" value="admin">
+        <input type="hidden" id="adminRedirectUri" name="redirect_uri">
+        <input type="hidden" id="adminState" name="state">
+        <button type="submit" class="login-button">
+          <span>admin@mail.com</span>
+        </button>
+      </form>
+      
+      <form method="POST" action="/login">
+        <input type="hidden" name="user_type" value="dev">
+        <input type="hidden" id="devRedirectUri" name="redirect_uri">
+        <input type="hidden" id="devState" name="state">
+        <button type="submit" class="login-button">
+          <span>dev@mail.com</span>
+        </button>
+      </form>
+
+      <div class="divider">
+        <span class="divider-text">E2E Testing</span>
+      </div>
+
+      <button type="button" class="toggle-btn" id="toggleCustom">
+        Use Custom User
+      </button>
+
+      <form method="POST" action="/login" class="custom-form" id="customForm">
+        <input type="hidden" name="user_type" value="custom">
+        <input type="hidden" id="customRedirectUri" name="redirect_uri">
+        <input type="hidden" id="customState" name="state">
+        <input type="hidden" name="groups" id="customGroups">
+        
+        <div class="form-group">
+          <label for="customEmail">Email Address</label>
+          <input 
+            type="email" 
+            id="customEmail" 
+            name="email" 
+            placeholder="testuser@mail.com"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Select Groups</label>
+          <div class="group-option">
+            <input type="checkbox" name="group" value="SG-EGT-AI-CENTER-USERS" id="group-prod">
+            <label for="group-prod">SG-EGT-AI-CENTER-USERS</label>
+          </div>
+          <div class="group-option">
+            <input type="checkbox" name="group" value="SG-EGT-AI-CENTER-TEST-USERS" id="group-test">
+            <label for="group-test">SG-EGT-AI-CENTER-TEST-USERS</label>
+          </div>
+          <div class="group-option">
+            <input type="checkbox" name="group" value="SG-EGT-AI-CENTER-LLM-USERS" id="group-llm">
+            <label for="group-llm">SG-EGT-AI-CENTER-LLM-USERS</label>
+          </div>
+          <div class="group-option">
+            <input type="checkbox" name="group" value="SG-EGT-AI-CENTER-TEST-LLM-USERS" id="group-test-llm">
+            <label for="group-test-llm">SG-EGT-AI-CENTER-TEST-LLM-USERS</label>
+          </div>
+          <div class="group-option">
+            <input type="checkbox" name="group" value="SG-EGT-AI-CENTER-ADMIN-TEMPORARY" id="group-admin">
+            <label for="group-admin">SG-EGT-AI-CENTER-ADMIN-TEMPORARY</label>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Login</button>
+      </form>
+    </div>
+
+    <script>
+    "use strict";
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUri = urlParams.get("redirect_uri");
+    const state = urlParams.get("state");
+    
+    if (redirectUri) {
+      document.getElementById("adminRedirectUri").value = redirectUri;
+      document.getElementById("devRedirectUri").value = redirectUri;
+      document.getElementById("customRedirectUri").value = redirectUri;
+    }
+    
+    if (state) {
+      document.getElementById("adminState").value = state;
+      document.getElementById("devState").value = state;
+      document.getElementById("customState").value = state;
+    }
+
+    const toggleBtn = document.getElementById("toggleCustom");
+    const customForm = document.getElementById("customForm");
+    const customGroupsInput = document.getElementById("customGroups");
+    const groupCheckboxes = document.querySelectorAll('input[name="group"]');
+
+    toggleBtn.addEventListener("click", () => {
+      customForm.classList.toggle("visible");
+      toggleBtn.textContent = customForm.classList.contains("visible") 
+        ? "Cancel" 
+        : "Use Custom User";
+    });
+
+    customForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("customEmail").value.trim();
+      const selectedGroups = Array.from(groupCheckboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+
+      if (!email) {
+        alert("Please enter an email address");
+        return;
+      }
+
+      if (selectedGroups.length === 0) {
+        alert("Please select at least one group");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, groups: selectedGroups }),
+        });
+
+        if (response.ok) {
+          customGroupsInput.value = JSON.stringify(selectedGroups);
+          customForm.submit();
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.message}`);
+        }
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      }
+    });
+    </script>
+  </body>
+</html>

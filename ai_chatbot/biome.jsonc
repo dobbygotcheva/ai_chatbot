@@ -1,0 +1,81 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/next",
+    "ultracite/biome/react"
+  ],
+  "javascript": {
+    "globals": ["vi"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "files": {
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "!node_modules",
+      "!.next",
+      "!ai-sdk",
+      "!components/ui",
+      "!lib/utils.ts",
+      "!hooks/use-mobile.ts",
+      "!app/(auth)/slot_gui",
+      "!components/starshine glitter"
+    ]
+  },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noUnknownAtRules": "off",
+        "noConsole": "off",
+        "noBitwiseOperators": "off"
+      },
+      "style": {
+        "noMagicNumbers": "off",
+        "noNestedTernary": "off",
+        "useConsistentTypeDefinitions": "off"
+      },
+      "nursery": {
+        "noUnnecessaryConditions": "off"
+      },
+      "complexity": {
+        "useSimplifiedLogicExpression": "off"
+      },
+      "correctness": {
+        "useUniqueElementIds": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off",
+        "useTopLevelRegex": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/tests/**/*.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/components/metrics/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNumberNamespace": "off"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+# Infrastructure CI/CD Pipeline
+# Builds and deploys postgres and qdrant services
+
+variables:
+  POSTGRES_IMAGE: postgres:16-alpine
+  QDRANT_IMAGE: qdrant/qdrant:${QDRANT_VERSION:-v1.13.2}
+
+# Deploy infrastructure to staging
+deploy-staging:infrastructure:
+  stage: deploy-staging
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker-staging.sock
+    POSTGRES_VOLUME_NAME: postgres_data
+    QDRANT_VOLUME_NAME: qdrant_data
+    NETWORK_NAME: ai_center_staging
+    POSTGRES_DB: ai_chatbot_staging
+    CONTAINER_NAME_PREFIX: ai_center_staging
+    POSTGRES_PORT: 5434
+    QDRANT_PORT: 6341
+  environment:
+    name: staging
+  script:
+    - |
+      set -euo pipefail
+      echo "🚀 Deploying infrastructure to staging..."
+      cd postgres
+      docker compose up -d
+      echo "✅ infrastructure deployed to staging"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "development"
+      changes:
+        - postgres/**/*
+        - .gitlab-ci.yml
+
+# Deploy infrastructure to production
+deploy-prod:infrastructure:
+  stage: deploy-prod
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker-prod.sock
+    POSTGRES_VOLUME_NAME: postgres_prod_data
+    QDRANT_VOLUME_NAME: qdrant_prod_data
+    NETWORK_NAME: ai_center_prod
+    POSTGRES_DB: ai_chatbot_prod
+    CONTAINER_NAME_PREFIX: ai_center_prod
+    POSTGRES_PORT: 5435
+    QDRANT_PORT: 6342
+  environment:
+    name: production
+  script:
+    - |
+      set -euo pipefail
+      echo "🚀 Deploying infrastructure to production..."
+      cd postgres
+      docker compose up -d
+      echo "✅ infrastructure deployed to production"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - postgres/**/*
+        - .gitlab-ci.yml

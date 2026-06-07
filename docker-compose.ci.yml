@@ -1,0 +1,111 @@
+# Local Development - Infrastructure Services
+# Usage: docker compose up -d
+# Starts all services except ai_chatbot (run locally with pnpm dev)
+# See ai_chatbot/.env.example for required environment variables
+
+services:
+  # MCP Atlassian
+  mcp-atlassian:
+    extends:
+      file: ./mcp-atlassian/docker-compose.yml
+      service: mcp-atlassian
+    networks:
+      - ai_center
+    environment:
+      - CONFLUENCE_URL=${CONFLUENCE_URL:-https://confluence.egt.com/}
+      - JIRA_URL=${JIRA_URL:-https://jira.egt.com/}
+
+  # PostgreSQL
+  postgres:
+    extends:
+      file: ./postgres/docker-compose.yml
+      service: postgres
+    networks:
+      - ai_center
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=ai_chatbot
+
+  # Qdrant
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: ai_center_qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - ai_center
+    restart: unless-stopped
+
+  # Crawl4AI
+  crawl4ai:
+    extends:
+      file: ./crawl4ai/docker-compose.yml
+      service: crawl4ai
+    networks:
+      - ai_center
+
+  # Docker-in-Docker daemon for code execution service
+  code-exec-dind:
+    image: docker:25-dind
+    container_name: ai_center_code_exec_dind
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    volumes:
+      - code-exec-dind-data:/var/lib/docker
+    networks:
+      - ai_center
+    ports:
+      - "2375:2375"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Code execution service
+  code-exec-svc:
+    build:
+      context: ./code-exec-svc
+      dockerfile: Dockerfile
+    container_name: ai_center_code_exec_svc
+    ports:
+      - "5001:5001"
+    depends_on:
+      code-exec-dind:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - DOCKER_HOST=tcp://ai_center_code_exec_dind:2375
+    networks:
+      - ai_center
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  # LLM Proxy
+  llm-proxy:
+    extends:
+      file: ./proxy-server/docker-compose.yml
+      service: llm-proxy
+    ports:
+      - "3001:3002"
+    networks:
+      - ai_center
+    environment:
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/ai_chatbot
+      - UPSTREAM_BASE_URL=${PROVIDER_BASE_URL:-https://ai-api.egt-bg.com/gateway/v1/}
+
+networks:
+  ai_center:
+    driver: bridge
+
+volumes:
+  qdrant_data:
+  code-exec-dind-data:

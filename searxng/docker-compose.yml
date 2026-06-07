@@ -1,0 +1,23 @@
+name: searxng
+
+services:
+  core:
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_searxng
+    image: ${SEARXNG_IMAGE:-docker.io/searxng/searxng:latest}
+    restart: unless-stopped
+    environment:
+      - SEARXNG_PORT=${SEARXNG_PORT:-8001}
+      - SEARXNG_BIND_ADDRESS=0.0.0.0
+      - SEARXNG_LIMITER=false
+    volumes:
+      - core-data:/var/cache/searxng/
+    networks:
+      - app_network
+
+volumes:
+  core-data:
+
+networks:
+  app_network:
+    name: ${NETWORK_NAME:-ai_center}
+    driver: bridge

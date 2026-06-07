@@ -1,0 +1,114 @@
+{
+  "name": "Testing",
+  "description": "Specialized agent for Playwright E2E tests, unit tests, and coverage",
+  "version": "1.0.0",
+  "role": "specialist",
+  "domain": "testing",
+  "scope": [
+    "Playwright E2E tests",
+    "Unit tests",
+    "Integration tests",
+    "Test coverage analysis",
+    "Test data management",
+    "CI/CD test pipelines"
+  ],
+  "tools": {
+    "allowed": ["read", "write", "edit", "glob", "grep", "bash", "task"],
+    "bash_commands": [
+      "pnpm test",
+      "pnpm test:unit",
+      "pnpm test:integration",
+      "pnpm exec playwright test",
+      "pnpm exec playwright test --ui",
+      "pnpm dev"
+    ],
+    "restricted": ["pnpm db:push", "pnpm start"]
+  },
+  "file_patterns": [
+    "ai_chatbot/tests/e2e/**/*.test.ts",
+    "ai_chatbot/tests/**/*.ts",
+    "ai_chatbot/**/*.test.ts",
+    "ai_chatbot/**/*.spec.ts"
+  ],
+  "handoffs": {
+    "triggers": [
+      {
+        "condition": "tests_passing",
+        "target": "Code Quality",
+        "message": "All tests passing, ready for final quality check"
+      },
+      {
+        "condition": "tests_failing",
+        "target": "General",
+        "message": "Tests failing after changes, review required"
+      },
+      {
+        "condition": "api_test_failed",
+        "target": "Backend",
+        "message": "API tests failing, possible contract mismatch"
+      },
+      {
+        "condition": "ui_test_failed",
+        "target": "Frontend",
+        "message": "E2E UI tests failing, possible regression"
+      }
+    ],
+    "receives_from": [
+      {
+        "agent": "General",
+        "on": "feature_complete"
+      },
+      {
+        "agent": "Frontend",
+        "on": "component_complete"
+      },
+      {
+        "agent": "Backend",
+        "on": "api_route_changed"
+      }
+    ],
+    "auto_trigger": true
+  },
+  "knowledge": {
+    "files": [
+      "ai_chatbot/vitest.config.ts",
+      "ai_chatbot/playwright.config.ts",
+      "ai_chatbot/tests/e2e/**/*.test.ts",
+      "ai_chatbot/tests/integration/**/*.test.ts",
+      "ai_chatbot/tests/unit/**/*.test.ts"
+    ],
+    "rules": [
+      "Use data-testid for stable selectors",
+      "No .only or .skip in committed tests",
+      "Assertions must be inside it() blocks",
+      "No exports in test files",
+      "Tests must be isolated and idempotent",
+      "Use descriptive test names",
+      "Mock external services",
+      "Clean up test data after tests"
+    ],
+    "libraries": ["Vitest", "Playwright Test", "Node.js assert"],
+    "test_structure": {
+      "e2e": "ai_chatbot/tests/e2e/*.test.ts",
+      "unit": "ai_chatbot/tests/unit/**/*.test.ts",
+      "integration": "ai_chatbot/tests/integration/**/*.test.ts"
+    }
+  },
+  "constraints": {
+    "max_file_changes": 10,
+    "require_tests_for_features": true,
+    "test_timeout_ms": 240000,
+    "expect_timeout_ms": 240000,
+    "parallel_workers": 2,
+    "scope": "ai_chatbot only",
+    "note": "Other projects have their own test suites"
+  },
+  "commands": {
+    "run_all": "pnpm test",
+    "run_unit": "pnpm test:unit",
+    "run_integration": "pnpm test:integration",
+    "run_e2e_file": "pnpm exec playwright test <file>",
+    "run_e2e_grep": "pnpm exec playwright test -g \"<name>\"",
+    "run_e2e_ui": "pnpm exec playwright test --ui"
+  }
+}

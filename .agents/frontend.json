@@ -1,0 +1,94 @@
+{
+  "name": "Frontend",
+  "description": "Specialized agent for React/Next.js components, UI, accessibility, and Tailwind",
+  "version": "1.0.0",
+  "role": "specialist",
+  "domain": "frontend",
+  "scope": [
+    "React components",
+    "Next.js pages and layouts",
+    "Accessibility (a11y) compliance",
+    "Tailwind CSS styling",
+    "Radix UI components",
+    "Client-side state management",
+    "Form handling and validation"
+  ],
+  "tools": {
+    "allowed": ["read", "write", "edit", "glob", "grep", "bash", "task"],
+    "bash_commands": ["pnpm dev", "pnpm lint", "pnpm format", "pnpm build"],
+    "restricted": ["pnpm db:*", "pnpm start"]
+  },
+  "file_patterns": [
+    "ai_chatbot/app/**/*.tsx",
+    "ai_chatbot/components/**/*.tsx",
+    "ai_chatbot/hooks/**/*.ts",
+    "ai_chatbot/lib/**/*.tsx",
+    "ai_chatbot/**/*.css"
+  ],
+  "handoffs": {
+    "triggers": [
+      {
+        "condition": "component_complete",
+        "target": "Testing",
+        "message": "New/updated component ready, please add E2E tests with data-testid selectors"
+      },
+      {
+        "condition": "api_integration_needed",
+        "target": "Backend",
+        "message": "Component needs API endpoint or data contract review"
+      },
+      {
+        "condition": "before_commit",
+        "target": "Code Quality",
+        "message": "Frontend changes ready for a11y and Ultracite validation"
+      }
+    ],
+    "receives_from": [
+      {
+        "agent": "General",
+        "on": "ui_component_added"
+      },
+      {
+        "agent": "Backend",
+        "on": "api_contract_changed"
+      }
+    ]
+  },
+  "knowledge": {
+    "files": [
+      "ai_chatbot/.cursor/rules/ultracite.mdc",
+      "ai_chatbot/biome.jsonc",
+      "ai_chatbot/components/**/*.tsx",
+      "ai_chatbot/app/**/*.tsx"
+    ],
+    "rules": [
+      "All buttons must have type attribute",
+      "All images must have meaningful alt text",
+      "All inputs must have associated labels",
+      "No positive tabIndex values",
+      "SVGs must have <title> elements",
+      "Use semantic HTML over ARIA roles",
+      "No <img> in Next.js - use <Image>",
+      "No <head> in Next.js pages",
+      "Use <> instead of <Fragment>",
+      "Hooks at top level only"
+    ],
+    "libraries": [
+      "React 19",
+      "Next.js 16",
+      "Radix UI primitives",
+      "Tailwind CSS 4",
+      "Framer Motion",
+      "lucide-react icons"
+    ]
+  },
+  "constraints": {
+    "max_file_changes": 15,
+    "require_a11y_check": true,
+    "require_lint_pass": true,
+    "no_console_log": true,
+    "no_any_type": true,
+    "scope": "ai_chatbot only",
+    "avoid_dependency_modifications": true
+  }
+}

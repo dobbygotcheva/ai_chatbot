@@ -1,0 +1,80 @@
+# Infrastructure Services - PostgreSQL + Qdrant
+# Usage: docker compose up -d
+# Volume names controlled by POSTGRES_VOLUME_NAME and QDRANT_VOLUME_NAME variables
+# Network name controlled by NETWORK_NAME variable
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-ai_chatbot}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '${POSTGRES_CPU_LIMIT:-2.0}'
+          memory: ${POSTGRES_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: '${POSTGRES_CPU_RESERVATION:-0.5}'
+          memory: ${POSTGRES_MEMORY_RESERVATION:-256M}
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "false"
+
+  qdrant:
+    image: qdrant/qdrant:${QDRANT_VERSION:-v1.13.2}
+    container_name: ${CONTAINER_NAME_PREFIX:-ai_center}_qdrant
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '${QDRANT_CPU_LIMIT:-2.0}'
+          memory: ${QDRANT_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: '${QDRANT_CPU_RESERVATION:-0.5}'
+          memory: ${QDRANT_MEMORY_RESERVATION:-256M}
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "false"
+
+# Network configuration - key name is static, actual name uses variable
+networks:
+  app_network:
+    name: ${NETWORK_NAME:-ai_center}
+    driver: bridge
+
+# Volumes - keys are static, but 'name:' field uses CI variables for environment separation
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-postgres_data}
+  qdrant_data:
+    name: ${QDRANT_VOLUME_NAME:-qdrant_data}

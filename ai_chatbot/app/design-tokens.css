@@ -1,0 +1,15 @@
+/* ==========================================================================
+   DESIGN TOKENS — layout / radius (цветовете са в palette.css)
+   ========================================================================== */
+
+@import "./palette.css";
+
+:root {
+  --radius: 0.5rem;
+  /*
+   * Portal chrome: header is h-14 in portal-top-header; footer matches for symmetry.
+   * Slide-out sidebar: fixed top-[--portal-header-height] bottom-[--portal-footer-height].
+   */
+  --portal-header-height: 3.5rem;
+  --portal-footer-height: 3.5rem;
+}

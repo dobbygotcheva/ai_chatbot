@@ -1,0 +1,84 @@
+# SearXNG CI/CD Pipeline
+# Deploys the SearXNG search service (uses pre-built image)
+
+variables:
+  SEARXNG_IMAGE: $CI_REGISTRY_IMAGE/searxng
+
+# Build searxng Docker image
+build:searxng:
+  stage: build
+  image: docker:24
+  services: []
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🔨 Building searxng image..."
+      docker build -t $SEARXNG_IMAGE:$CI_COMMIT_SHORT_SHA -t $SEARXNG_IMAGE:latest ./searxng
+      echo "📤 Pushing images..."
+      docker push $SEARXNG_IMAGE:$CI_COMMIT_SHORT_SHA
+      docker push $SEARXNG_IMAGE:latest
+      echo "✅ searxng built and pushed"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - searxng/**/*
+
+# Deploy to staging
+deploy-staging:searxng:
+  stage: deploy-staging
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker-staging.sock
+    NETWORK_NAME: ai_center_staging
+    CONTAINER_NAME_PREFIX: ai_center_staging
+    SEARXNG_PORT: 8001
+  environment:
+    name: staging
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🚀 Deploying searxng to staging..."
+      docker pull $SEARXNG_IMAGE:$CI_COMMIT_SHORT_SHA
+      cd searxng
+      docker compose up -d
+      echo "✅ searxng deployed to staging"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "development"
+      changes:
+        - searxng/**/*
+        - .gitlab-ci.yml
+
+# Deploy to production
+deploy-prod:searxng:
+  stage: deploy-prod
+  image: docker:24
+  services: []
+  variables:
+    DOCKER_HOST: unix:///var/run/docker-prod.sock
+    NETWORK_NAME: ai_center_prod
+    CONTAINER_NAME_PREFIX: ai_center_prod
+    SEARXNG_PORT: 8001
+  environment:
+    name: production
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      set -euo pipefail
+      echo "🚀 Deploying searxng to production..."
+      docker pull $SEARXNG_IMAGE:$CI_COMMIT_SHORT_SHA
+      cd searxng
+      docker compose up -d
+      echo "✅ searxng deployed to production"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - searxng/**/*
+        - .gitlab-ci.yml

@@ -1,0 +1,196 @@
+# Local Development - Infrastructure Services
+# Usage: docker compose -f docker-compose.local.yml up -d
+
+services:
+  # MCP Atlassian
+  mcp-atlassian:
+    build:
+      context: ./mcp-atlassian
+      dockerfile: Dockerfile
+    container_name: ai_center_mcp_atlassian
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - CONFLUENCE_URL=${CONFLUENCE_URL:-https://confluence.egt.com/}
+      - JIRA_URL=${JIRA_URL:-https://jira.egt.com/}
+      - ATLASSIAN_OAUTH_ENABLE=true
+      - READ_ONLY_MODE=true
+      - TRANSPORT=streamable-http
+      - TOOLSETS=all
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # PostgreSQL
+  postgres:
+    extends:
+      file: ./postgres/docker-compose.yml
+      service: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=ai_chatbot
+
+  # Qdrant
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: ai_center_qdrant
+    ports:
+      - "6340:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  # Crawl4AI
+  crawl4ai:
+    build:
+      context: ./crawl4ai
+      dockerfile: Dockerfile
+    container_name: ai_center_crawl4ai
+    ports:
+      - "11235:11235"
+    environment:
+      - PORT=11235
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: ai_center_searxng
+    ports:
+      - "8001:8001"
+    environment:
+      - SEARXNG_PORT=8001
+      - SEARXNG_BIND_ADDRESS=0.0.0.0
+      - SEARXNG_LIMITER=false
+    volumes:
+      - ./searxng/core-config/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng_data:/var/cache/searxng/
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  code-exec-dind:
+    image: docker:25-dind
+    container_name: ai_center_code_exec_dind
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    volumes:
+      - code-exec-dind-data:/var/lib/docker
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Load runtime images into Docker-in-Docker
+  code-exec-load-images:
+    image: docker:25-cli
+    container_name: ai_center_code_exec_load_images
+    depends_on:
+      code-exec-dind:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts:/scripts:ro
+    command: ["/scripts/load-runtime-images.sh"]
+    restart: "no"
+
+  # Code execution service
+  code-exec-svc:
+    build:
+      context: ./code-exec-svc
+      dockerfile: Dockerfile
+    container_name: ai_center_code_exec_svc
+    ports:
+      - "5001:5001"
+    depends_on:
+      code-exec-dind:
+        condition: service_healthy
+      code-exec-load-images:
+        condition: service_completed_successfully
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - DOCKER_HOST=tcp://ai_center_code_exec_dind:2375
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  # LLM Proxy (optional)
+  llm-proxy:
+    build:
+      context: ./proxy-server
+      dockerfile: Dockerfile
+    container_name: ai_center_llm_proxy
+    ports:
+      - "3001:3002"
+    environment:
+      - PORT=3002
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/ai_chatbot
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - PROVIDER_API_KEY=${PROVIDER_API_KEY}
+      - UPSTREAM_BASE_URL=${PROVIDER_BASE_URL:-https://ai-api.egt-bg.com/gateway/v1/}
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # Mock Microsoft 365 Auth (for local Azure AD testing)
+  mock-m365-auth:
+    build:
+      context: ./mock-m365-auth
+      dockerfile: Dockerfile
+    container_name: ai_center_mock_m365_auth
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Runtime images for code execution (build only, not run)
+  code-exec-python-build:
+    build:
+      context: ./code-exec-svc/runtimes/python
+      dockerfile: Dockerfile
+    image: code-exec-python:latest
+    profiles: ["build"]
+
+  code-exec-node-build:
+    build:
+      context: ./code-exec-svc/runtimes/javascript
+      dockerfile: Dockerfile
+    image: code-exec-node:latest
+    profiles: ["build"]
+
+  code-exec-bash-build:
+    build:
+      context: ./code-exec-svc/runtimes/bash
+      dockerfile: Dockerfile
+    image: code-exec-bash:latest
+    profiles: ["build"]
+
+volumes:
+  qdrant_data:
+  code-exec-dind-data:
+  postgres_data:
+  searxng_data:
+
+networks:
+  app_network:
+    name: ai_center
+    driver: bridge

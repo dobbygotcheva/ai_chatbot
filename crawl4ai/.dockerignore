@@ -1,0 +1,75 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+CHANGELOG.md
+ROADMAP.md
+MISSION.md
+CONTRIBUTORS.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+SPONSORS.md
+JOURNAL.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+pytest.ini
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Development
+.env*
+!.llm.env
+.env.txt
+.env.local
+*.log
+*.tmp
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.eggs/
+*.egg-info/
+build/
+dist/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Deployment (keep deploy/docker/ for build)
+deploy/helm/
+deploy/k8s/
+
+# Misc
+*.tar
+*.gz
+*.zip
+uv.lock
+poetry.lock
+setup.cfg
+MANIFEST.in
+cliff.toml
+mkdocs.yml
+site/
